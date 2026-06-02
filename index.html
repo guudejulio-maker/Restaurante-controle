@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marmitas · Scarlat</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f3ef;
+    --surface: #ffffff;
+    --surface2: #f0ede8;
+    --border: #e0dbd3;
+    --text: #1a1917;
+    --text2: #6b6760;
+    --text3: #9e9a94;
+    --accent: #c9622f;
+    --accent-bg: #fdf0ea;
+    --accent-border: #f2c4a8;
+    --green: #2d7d4f;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.5; }
+
+  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; gap: 24px; height: 56px; position: sticky; top: 0; z-index: 100; }
+  .header-logo { font-size: 15px; font-weight: 600; color: var(--accent); letter-spacing: -0.3px; }
+  .header-logo span { color: var(--text2); font-weight: 400; }
+  .nav { display: flex; gap: 2px; margin-left: auto; }
+  .nav-btn { padding: 6px 14px; border-radius: var(--radius-sm); border: none; background: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text2); transition: all 0.15s; }
+  .nav-btn:hover { background: var(--surface2); color: var(--text); }
+  .nav-btn.active { background: var(--accent-bg); color: var(--accent); font-weight: 500; }
+
+  .main { max-width: 1020px; margin: 0 auto; padding: 24px 16px; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+  .card-title { font-size: 13px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
+
+  .form-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 140px; }
+  .form-group label { font-size: 12px; color: var(--text2); font-weight: 500; }
+  select, input[type=text], input[type=date], input[type=number] {
+    font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 8px 10px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--surface); color: var(--text); outline: none; transition: border-color 0.15s; width: 100%;
+  }
+  select:focus, input:focus { border-color: var(--accent); }
+
+  .btn { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 8px 16px; border-radius: var(--radius-sm); border: 1px solid transparent; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .btn-primary:hover { background: #b35526; }
+  .btn-ghost { background: none; color: var(--text2); border-color: var(--border); }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+  .btn-green { background: var(--green); color: white; border-color: var(--green); }
+  .btn-green:hover { background: #22653f; }
+  .btn-danger { background: none; color: #c0392b; border-color: #f5c6c3; font-size: 12px; padding: 4px 10px; }
+  .btn-danger:hover { background: #fdf0ef; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-icon { padding: 4px 8px; font-size: 13px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: none; cursor: pointer; color: var(--text2); transition: all 0.15s; }
+  .btn-icon:hover { background: var(--surface2); }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 10px; font-size: 11px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid var(--border); background: var(--surface2); }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr.editing td { background: #fffbf8; }
+
+  /* Inputs inline na tabela */
+  td select, td input { font-size: 12px; padding: 4px 7px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface); color: var(--text); font-family: 'DM Sans', sans-serif; width: 100%; }
+  td select:focus, td input:focus { border-color: var(--accent); outline: none; }
+
+  .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; background: var(--surface2); color: var(--text2); }
+  .badge-banho { background: #e8f0fe; color: #1a56a0; }
+  .badge-recepcao { background: #f3e8fe; color: #6b21a8; }
+  .badge-mesa { background: #e8fef0; color: #166534; }
+  .badge-geral { background: #fef9e8; color: #854d0e; }
+
+  .pedido-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; margin-bottom: 16px; }
+  .func-card { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; cursor: pointer; transition: all 0.15s; position: relative; }
+  .func-card:hover { border-color: var(--accent-border); background: var(--accent-bg); }
+  .func-card.selected { border-color: var(--accent); background: var(--accent-bg); }
+  .func-card .name { font-size: 13px; font-weight: 500; }
+  .func-card .setor { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .func-card .pedido-tag { position: absolute; top: 6px; right: 8px; font-size: 10px; font-weight: 500; color: var(--accent); background: var(--accent-bg); border: 1px solid var(--accent-border); border-radius: 10px; padding: 1px 6px; }
+
+  .wpp-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius); padding: 16px 20px; margin-top: 16px; }
+  .wpp-title { font-size: 12px; font-weight: 500; color: #15803d; margin-bottom: 10px; }
+  .wpp-text { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); white-space: pre-wrap; line-height: 1.7; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 10px; max-height: 300px; overflow-y: auto; }
+
+  .total-card { background: var(--accent-bg); border: 1px solid var(--accent-border); border-radius: var(--radius); padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .total-label { font-size: 12px; color: var(--text2); }
+  .total-value { font-size: 22px; font-weight: 600; color: var(--accent); }
+
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+  .section-title { font-size: 13px; font-weight: 600; }
+
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--text); color: white; padding: 10px 18px; border-radius: var(--radius); font-size: 13px; z-index: 999; opacity: 0; transform: translateY(10px); transition: all 0.2s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  .empty { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 13px; }
+
+  .config-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .config-box { background: var(--surface); border-radius: var(--radius); padding: 28px; max-width: 440px; width: 100%; border: 1px solid var(--border); }
+  .config-box h2 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .config-box p { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.6; }
+  .config-box .form-group { margin-bottom: 12px; }
+
+  /* Modal novo pedido */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 150; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .modal-box { background: var(--surface); border-radius: var(--radius); padding: 24px; max-width: 440px; width: 100%; border: 1px solid var(--border); }
+  .modal-box h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .modal-box .sub { font-size: 13px; color: var(--text2); margin-bottom: 18px; }
+  .item-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .item-opt { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; transition: all 0.12s; }
+  .item-opt:hover { border-color: var(--accent-border); background: var(--accent-bg); }
+  .item-opt.selected { border-color: var(--accent); background: var(--accent-bg); }
+  .item-nome { font-size: 13px; font-weight: 500; flex: 1; }
+  .item-preco { font-size: 13px; color: var(--accent); font-weight: 500; font-family: 'DM Mono', monospace; }
+  .qty-row { display: flex; align-items: center; gap: 10px; }
+  .qty-btn { width: 30px; height: 30px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: none; cursor: pointer; font-size: 16px; color: var(--text); display: flex; align-items: center; justify-content: center; }
+  .qty-num { font-size: 15px; font-weight: 500; min-width: 24px; text-align: center; }
+
+  .rel-header { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 16px; flex-wrap: wrap; }
+
+  @media (max-width: 600px) {
+    .header { padding: 0 12px; }
+    .main { padding: 16px 10px; }
+    .form-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- CONFIG -->
+<div class="config-overlay" id="configOverlay">
+  <div class="config-box">
+    <h2>Configurar conexão</h2>
+    <p>Informe as credenciais do projeto Supabase.</p>
+    <div class="form-group"><label>URL do Projeto</label><input type="text" id="cfgUrl" placeholder="https://xxxx.supabase.co"></div>
+    <div class="form-group"><label>Chave Anon</label><input type="text" id="cfgKey" placeholder="eyJhbGciOiJ..."></div>
+    <div style="display:flex; gap:10px; margin-top:8px;">
+      <button class="btn btn-primary" onclick="salvarConfig()">Conectar</button>
+      <button class="btn btn-ghost" onclick="usarDemo()">Modo demonstração</button>
+    </div>
+    <p style="margin-top:14px; margin-bottom:0; font-size:11px; color:var(--text3);">Credenciais salvas localmente no navegador.</p>
+  </div>
+</div>
+
+<!-- MODAL NOVO PEDIDO -->
+<div class="modal-overlay" id="modalItem" style="display:none;">
+  <div class="modal-box">
+    <h3 id="modalFuncNome"></h3>
+    <p class="sub">Escolha o item do pedido</p>
+    <div class="item-list" id="itemList"></div>
+    <div class="qty-row" style="margin-bottom:12px;">
+      <span style="font-size:13px;color:var(--text2);">Qtd:</span>
+      <button class="qty-btn" onclick="changeQty(-1)">−</button>
+      <span class="qty-num" id="qtyNum">1</span>
+      <button class="qty-btn" onclick="changeQty(1)">+</button>
+      <span style="font-size:12px;color:var(--text3);margin-left:4px;" id="qtyTotal"></span>
+    </div>
+    <div id="valorVariavelRow" style="display:none;margin-bottom:12px;">
+      <label style="font-size:12px;color:var(--text2);font-weight:500;display:block;margin-bottom:5px;">Valor (R$) — preencha conforme a nota</label>
+      <input type="number" id="valorVariavel" placeholder="0,00" step="0.01" min="0" style="width:140px;">
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;color:var(--text2);font-weight:500;display:block;margin-bottom:5px;">Observação <span style="font-weight:400;color:var(--text3);">(ex: arroz, frango, sem cebola...)</span></label>
+      <input type="text" id="modalObs" placeholder="Descreva o pedido para o restaurante...">
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" onclick="confirmarItem()">Confirmar pedido</button>
+      <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-logo">🍱 Marmitas <span>· Scarlat</span></div>
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showPage('pedido',this)">Pedido do dia</button>
+    <button class="nav-btn" onclick="showPage('historico',this)">Histórico</button>
+    <button class="nav-btn" onclick="showPage('relatorio',this)">Relatório</button>
+    <button class="nav-btn" onclick="showPage('config',this)">Config</button>
+  </nav>
+</div>
+
+<div class="main">
+
+  <!-- PEDIDO DO DIA -->
+  <div class="page active" id="page-pedido">
+    <div class="card">
+      <div class="section-header">
+        <span class="card-title" style="margin:0;">Data do pedido</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="date" id="dataPedido" style="width:auto;" onchange="carregarPedidosDia()">
+          <button class="btn btn-ghost btn-sm" onclick="setHoje()">Hoje</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-header">
+        <span class="card-title" style="margin:0;">Funcionários</span>
+        <select id="filtroSetor" onchange="renderFuncionarios()" style="font-size:12px;padding:4px 8px;width:auto;">
+          <option value="">Todos os setores</option>
+          <option value="Banho">Banho</option>
+          <option value="Recepção">Recepção</option>
+          <option value="Mesa">Mesa</option>
+          <option value="Geral">Geral</option>
+        </select>
+      </div>
+      <div class="pedido-grid" id="funcGrid"></div>
+    </div>
+
+    <div class="card" id="resumoDiaCard" style="display:none;">
+      <div class="section-header">
+        <span class="card-title" style="margin:0;">Pedidos do dia <span id="countPedidos" style="color:var(--text3);font-weight:400;"></span></span>
+        <button class="btn btn-green btn-sm" onclick="gerarWhatsApp()">📋 Gerar mensagem WhatsApp</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:160px;">Funcionário</th>
+              <th style="width:90px;">Setor</th>
+              <th style="width:150px;">Item</th>
+              <th style="width:50px;">Qtd</th>
+              <th style="width:90px;">Valor unit.</th>
+              <th>Observação</th>
+              <th style="width:80px;">Total</th>
+              <th style="width:80px;"></th>
+            </tr>
+          </thead>
+          <tbody id="pedidosDiaBody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;align-items:center;gap:16px;">
+        <span style="font-size:13px;color:var(--text2);">Total do dia:</span>
+        <span style="font-size:16px;font-weight:600;color:var(--accent);font-family:'DM Mono',monospace;" id="totalDia">R$ 0,00</span>
+      </div>
+    </div>
+
+    <div class="wpp-box" id="wppBox" style="display:none;">
+      <div class="wpp-title">✅ Mensagem para o restaurante</div>
+      <div class="wpp-text" id="wppText"></div>
+      <button class="btn btn-green btn-sm" onclick="copiarWpp()">Copiar mensagem</button>
+    </div>
+  </div>
+
+  <!-- HISTÓRICO -->
+  <div class="page" id="page-historico">
+    <div class="card">
+      <div class="section-header">
+        <span class="card-title" style="margin:0;">Histórico de pedidos</span>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input type="date" id="histDe" style="width:auto;font-size:12px;">
+          <span style="font-size:12px;color:var(--text2);">até</span>
+          <input type="date" id="histAte" style="width:auto;font-size:12px;">
+          <button class="btn btn-ghost btn-sm" onclick="carregarHistorico()">Filtrar</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th><th>Funcionário</th><th>Setor</th><th>Item</th><th>Qtd</th><th>Valor</th><th>Observação</th>
+            </tr>
+          </thead>
+          <tbody id="historicoBody"></tbody>
+        </table>
+      </div>
+      <div id="histEmpty" class="empty" style="display:none;">Nenhum pedido encontrado neste período.</div>
+    </div>
+  </div>
+
+  <!-- RELATÓRIO -->
+  <div class="page" id="page-relatorio">
+    <div class="card">
+      <div class="rel-header">
+        <div class="form-group" style="min-width:0;flex:0 0 auto;">
+          <label>Mês</label>
+          <select id="relMes" style="width:130px;">
+            <option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option>
+            <option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option>
+            <option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option>
+            <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
+          </select>
+        </div>
+        <div class="form-group" style="min-width:0;flex:0 0 auto;">
+          <label>Ano</label>
+          <input type="number" id="relAno" value="2026" style="width:90px;">
+        </div>
+        <div class="form-group" style="min-width:0;flex:0 0 auto;">
+          <label>Quinzena</label>
+          <select id="relQuinzena" style="width:140px;">
+            <option value="1">1ª (dias 1–15)</option>
+            <option value="2">2ª (dias 16–31)</option>
+          </select>
+        </div>
+        <button class="btn btn-primary btn-sm" style="align-self:flex-end;" onclick="gerarRelatorio()">Gerar relatório</button>
+      </div>
+    </div>
+    <div id="relResultado" style="display:none;">
+      <div class="total-card">
+        <div>
+          <div class="total-label" id="relPeriodoLabel"></div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px;" id="relTotalPedidos"></div>
+        </div>
+        <div class="total-value" id="relTotalGeral"></div>
+      </div>
+      <div class="card">
+        <div class="section-header"><span class="card-title" style="margin:0;">Total por funcionário</span></div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Funcionário</th><th>Setor</th><th>Pedidos</th><th>Total</th></tr></thead>
+          <tbody id="relFuncBody"></tbody></table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-header"><span class="card-title" style="margin:0;">Detalhamento dia a dia</span></div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Data</th><th>Funcionário</th><th>Item</th><th>Qtd</th><th>Valor</th><th>Observação</th></tr></thead>
+          <tbody id="relDiaBody"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIG -->
+  <div class="page" id="page-config">
+    <div class="card">
+      <div class="card-title">Cardápio / Itens disponíveis</div>
+      <div class="form-row">
+        <div class="form-group"><label>Nome do item</label><input type="text" id="novoItemNome" placeholder="Ex: Marmita P"></div>
+        <div class="form-group" style="max-width:120px;"><label>Preço (R$)</label><input type="number" id="novoItemPreco" placeholder="20.00" step="0.01"></div>
+        <div class="form-group" style="max-width:160px;flex-direction:row;align-items:center;gap:8px;padding-top:18px;">
+          <input type="checkbox" id="novoItemVariavel" style="width:16px;height:16px;cursor:pointer;">
+          <label for="novoItemVariavel" style="font-size:12px;cursor:pointer;">Valor variável</label>
+        </div>
+        <div style="align-self:flex-end;"><button class="btn btn-primary" onclick="adicionarItem()">Adicionar</button></div>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Item</th><th>Preço</th><th>Variável</th><th></th></tr></thead>
+        <tbody id="cardapioBody"></tbody></table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Funcionários cadastrados</div>
+      <div class="form-row">
+        <div class="form-group"><label>Nome</label><input type="text" id="novoFuncNome" placeholder="Nome completo"></div>
+        <div class="form-group" style="max-width:150px;"><label>Setor</label>
+          <select id="novoFuncSetor"><option>Banho</option><option>Recepção</option><option>Mesa</option><option>Geral</option></select>
+        </div>
+        <div style="align-self:flex-end;"><button class="btn btn-primary" onclick="adicionarFuncionario()">Adicionar</button></div>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Nome</th><th>Setor</th><th></th></tr></thead>
+        <tbody id="funcConfigBody"></tbody></table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Conexão Supabase</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <span style="font-size:13px;color:var(--text2);" id="statusConexao">Não configurado</span>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('configOverlay').style.display='flex'">Reconfigurar</button>
+      </div>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+        <div class="card-title">SQL para criar as tabelas</div>
+        <pre style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;overflow-x:auto;line-height:1.7;white-space:pre-wrap;" id="sqlInstructions"></pre>
+        <button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="copiarSQL()">Copiar SQL</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SQL_TABLES = `create table if not exists marmitas_funcionarios (
+  id uuid primary key default gen_random_uuid(),
+  nome text not null, setor text not null, ativo boolean default true,
+  created_at timestamptz default now()
+);
+create table if not exists marmitas_cardapio (
+  id uuid primary key default gen_random_uuid(),
+  nome text not null, preco numeric(10,2) not null,
+  preco_variavel boolean default false, ativo boolean default true,
+  created_at timestamptz default now()
+);
+create table if not exists marmitas_pedidos (
+  id uuid primary key default gen_random_uuid(),
+  data date not null,
+  funcionario_id uuid references marmitas_funcionarios(id),
+  funcionario_nome text, funcionario_setor text,
+  item_id uuid references marmitas_cardapio(id),
+  item_nome text, item_preco numeric(10,2),
+  quantidade integer default 1, total numeric(10,2),
+  observacao text, created_at timestamptz default now()
+);
+create index if not exists idx_pedidos_data on marmitas_pedidos(data);`;
+
+document.getElementById('sqlInstructions').textContent = SQL_TABLES;
+
+let sb = null, modoDemo = false;
+let funcionarios = [], cardapio = [], pedidosDia = [];
+let modalFuncId = null, modalQty = 1, modalItemId = null;
+
+// DEMO DATA
+const demoFuncs = [
+  {id:'f1',nome:'Julia Mattos',setor:'Mesa'},{id:'f2',nome:'Camile Tetzner',setor:'Recepção'},
+  {id:'f3',nome:'Tahine Trento',setor:'Banho'},{id:'f4',nome:'Giovanni Cremasco',setor:'Banho'},
+];
+const demoCardapio = [
+  {id:'i1',nome:'Marmita P',preco:20,preco_variavel:false},{id:'i2',nome:'Marmita M',preco:23,preco_variavel:false},
+  {id:'i3',nome:'Marmita G',preco:26,preco_variavel:false},{id:'i4',nome:'Coca Lata',preco:8,preco_variavel:false},
+  {id:'i5',nome:'Almoço Presencial',preco:0,preco_variavel:true},
+];
+let demoPedidos = [];
+
+window.onload = () => {
+  const url = localStorage.getItem('sb_url') || 'https://hyuqruwpcevwhwqmptbe.supabase.co';
+  const key = localStorage.getItem('sb_key') || 'sb_publishable_t2QO6bLM9jfxhzPWNaT7nw_xnhBIYOF';
+  if (url && key) { conectar(url, key); } else {
+    document.getElementById('cfgUrl').value = url;
+    document.getElementById('cfgKey').value = key || '';
+  }
+  setHoje();
+  setHistoricoDefault();
+  setRelatorioDefault();
+};
+
+function setHoje() {
+  document.getElementById('dataPedido').value = new Date().toISOString().split('T')[0];
+  carregarPedidosDia();
+}
+function setHistoricoDefault() {
+  const hoje = new Date(), m = new Date(hoje);
+  m.setDate(hoje.getDate()-30);
+  document.getElementById('histDe').value = m.toISOString().split('T')[0];
+  document.getElementById('histAte').value = hoje.toISOString().split('T')[0];
+}
+function setRelatorioDefault() {
+  const hoje = new Date();
+  document.getElementById('relMes').value = hoje.getMonth()+1;
+  document.getElementById('relAno').value = hoje.getFullYear();
+  document.getElementById('relQuinzena').value = hoje.getDate()<=15?'1':'2';
+}
+
+function salvarConfig() {
+  const url = document.getElementById('cfgUrl').value.trim();
+  const key = document.getElementById('cfgKey').value.trim();
+  if (!url||!key){toast('Preencha URL e chave');return;}
+  localStorage.setItem('sb_url',url); localStorage.setItem('sb_key',key);
+  conectar(url,key);
+}
+function conectar(url,key) {
+  try {
+    sb = supabase.createClient(url,key);
+    modoDemo = false;
+    document.getElementById('configOverlay').style.display='none';
+    document.getElementById('statusConexao').textContent='✅ Conectado: '+url.replace('https://','').split('.')[0];
+    carregarDados(); toast('Conectado!');
+  } catch(e){ toast('Erro: '+e.message); }
+}
+function usarDemo() {
+  modoDemo=true; sb=null;
+  document.getElementById('configOverlay').style.display='none';
+  document.getElementById('statusConexao').textContent='⚠️ Modo demonstração';
+  funcionarios=[...demoFuncs]; cardapio=[...demoCardapio];
+  renderFuncionarios(); renderCardapioConfig(); renderFuncConfig(); carregarPedidosDia(); toast('Demo ativado');
+}
+async function carregarDados() {
+  if(modoDemo)return;
+  const [rf,rc]=await Promise.all([
+    sb.from('marmitas_funcionarios').select('*').eq('ativo',true).order('setor').order('nome'),
+    sb.from('marmitas_cardapio').select('*').eq('ativo',true).order('preco'),
+  ]);
+  funcionarios=rf.data||[]; cardapio=rc.data||[];
+  renderFuncionarios(); renderCardapioConfig(); renderFuncConfig(); carregarPedidosDia();
+}
+
+function showPage(page,btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  btn.classList.add('active');
+  if(page==='historico') carregarHistorico();
+}
+
+// ---- FUNCIONÁRIOS GRID ----
+function renderFuncionarios() {
+  const setor=document.getElementById('filtroSetor').value;
+  const lista=setor?funcionarios.filter(f=>f.setor===setor):funcionarios;
+  const grid=document.getElementById('funcGrid');
+  if(!lista.length){grid.innerHTML='<p class="empty">Nenhum funcionário cadastrado.</p>';return;}
+  const pMap={};
+  pedidosDia.forEach(p=>{pMap[p.funcionario_id]=p;});
+  grid.innerHTML=lista.map(f=>{
+    const tem=pMap[f.id];
+    return `<div class="func-card ${tem?'selected':''}" onclick="abrirModal('${f.id}','${f.nome.replace(/'/g,"\\'")}','${f.setor}')">
+      <div class="name">${f.nome}</div>
+      <div class="setor">${f.setor}</div>
+      ${tem?`<span class="pedido-tag">${tem.item_nome}</span>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ---- MODAL ----
+function abrirModal(id,nome,setor) {
+  modalFuncId=id; modalQty=1; modalItemId=null;
+  document.getElementById('modalFuncNome').textContent=nome+' · '+setor;
+  document.getElementById('qtyNum').textContent='1';
+  document.getElementById('qtyTotal').textContent='';
+  document.getElementById('modalObs').value='';
+  document.getElementById('valorVariavel').value='';
+  document.getElementById('valorVariavelRow').style.display='none';
+  document.getElementById('itemList').innerHTML=cardapio.map(item=>
+    `<div class="item-opt" id="opt_${item.id}" onclick="selecionarItem('${item.id}',${item.preco},${item.preco_variavel?'true':'false'})">
+      <span class="item-nome">${item.nome}</span>
+      <span class="item-preco">${item.preco_variavel?'valor variável':'R$ '+Number(item.preco).toFixed(2).replace('.',',')}</span>
+    </div>`
+  ).join('');
+  document.getElementById('modalItem').style.display='flex';
+}
+function selecionarItem(id,preco,variavel) {
+  modalItemId=id;
+  document.querySelectorAll('.item-opt').forEach(el=>el.classList.remove('selected'));
+  document.getElementById('opt_'+id).classList.add('selected');
+  if(variavel){
+    document.getElementById('valorVariavelRow').style.display='block';
+    document.getElementById('qtyTotal').textContent='';
+  } else {
+    document.getElementById('valorVariavelRow').style.display='none';
+    atualizarQtyTotal(preco);
+  }
+}
+function changeQty(d) {
+  modalQty=Math.max(1,modalQty+d);
+  document.getElementById('qtyNum').textContent=modalQty;
+  if(modalItemId){const it=cardapio.find(i=>i.id===modalItemId);if(it&&!it.preco_variavel)atualizarQtyTotal(it.preco);}
+}
+function atualizarQtyTotal(preco) {
+  document.getElementById('qtyTotal').textContent='= R$ '+(modalQty*preco).toFixed(2).replace('.',',');
+}
+function fecharModal() {
+  document.getElementById('modalItem').style.display='none';
+  modalFuncId=null; modalItemId=null; modalQty=1;
+}
+async function confirmarItem() {
+  if(!modalItemId){toast('Selecione um item');return;}
+  const func=funcionarios.find(f=>f.id===modalFuncId);
+  const item=cardapio.find(i=>i.id===modalItemId);
+  const data=document.getElementById('dataPedido').value;
+  const obs=document.getElementById('modalObs').value.trim();
+  let precoFinal=Number(item.preco);
+  if(item.preco_variavel){const v=parseFloat(document.getElementById('valorVariavel').value);if(!isNaN(v)&&v>0)precoFinal=v;}
+  const total=precoFinal*modalQty;
+  const pedido={data,funcionario_id:func.id,funcionario_nome:func.nome,funcionario_setor:func.setor,
+    item_id:item.id,item_nome:item.nome,item_preco:precoFinal,quantidade:modalQty,total,observacao:obs||null};
+  if(modoDemo){
+    demoPedidos=demoPedidos.filter(p=>!(p.funcionario_id===func.id&&p.data===data));
+    demoPedidos.push({...pedido,id:'demo_'+Date.now()});
+    toast('Pedido registrado (demo)');
+  } else {
+    await sb.from('marmitas_pedidos').delete().match({data,funcionario_id:func.id});
+    const {error}=await sb.from('marmitas_pedidos').insert([pedido]);
+    if(error){toast('Erro: '+error.message);return;}
+    toast('Pedido registrado!');
+  }
+  fecharModal(); carregarPedidosDia();
+}
+
+// ---- PEDIDOS DO DIA ----
+async function carregarPedidosDia() {
+  const data=document.getElementById('dataPedido').value;
+  if(!data)return;
+  if(modoDemo){pedidosDia=demoPedidos.filter(p=>p.data===data);}
+  else if(sb){const {data:rows}=await sb.from('marmitas_pedidos').select('*').eq('data',data).order('funcionario_setor').order('funcionario_nome');pedidosDia=rows||[];}
+  else{pedidosDia=[];}
+  renderFuncionarios(); renderPedidosDia();
+  document.getElementById('wppBox').style.display='none';
+}
+
+function badgeSetor(s){return s==='Banho'?'banho':s==='Recepção'?'recepcao':s==='Mesa'?'mesa':'geral';}
+
+function renderPedidosDia() {
+  const tbody=document.getElementById('pedidosDiaBody');
+  const card=document.getElementById('resumoDiaCard');
+  if(!pedidosDia.length){card.style.display='none';return;}
+  card.style.display='block';
+  document.getElementById('countPedidos').textContent=`(${pedidosDia.length})`;
+
+  // opções para selects inline
+  const funcOpts=funcionarios.map(f=>`<option value="${f.id}">${f.nome}</option>`).join('');
+  const itemOpts=cardapio.map(i=>`<option value="${i.id}">${i.nome}</option>`).join('');
+
+  let totalGeral=0;
+  tbody.innerHTML=pedidosDia.map(p=>{
+    totalGeral+=Number(p.total);
+    const isVariavel=cardapio.find(i=>i.id===p.item_id)?.preco_variavel;
+    return `<tr id="row_${p.id}">
+      <td><select onchange="editarCampo('${p.id}','funcionario',this.value)" style="min-width:120px;">
+        ${funcionarios.map(f=>`<option value="${f.id}"${f.id===p.funcionario_id?' selected':''}>${f.nome}</option>`).join('')}
+      </select></td>
+      <td><span class="badge badge-${badgeSetor(p.funcionario_setor)}">${p.funcionario_setor}</span></td>
+      <td><select onchange="editarCampo('${p.id}','item',this.value)" style="min-width:110px;">
+        ${cardapio.map(i=>`<option value="${i.id}"${i.id===p.item_id?' selected':''}>${i.nome}</option>`).join('')}
+      </select></td>
+      <td><input type="number" value="${p.quantidade}" min="1" style="width:52px;text-align:center;" onchange="editarCampo('${p.id}','quantidade',this.value)"></td>
+      <td><input type="number" value="${Number(p.item_preco).toFixed(2)}" min="0" step="0.01" style="width:75px;" onchange="editarCampo('${p.id}','preco',this.value)"></td>
+      <td><input type="text" value="${p.observacao||''}" placeholder="observação..." onchange="editarCampo('${p.id}','observacao',this.value)"></td>
+      <td style="font-family:'DM Mono',monospace;color:var(--accent);white-space:nowrap;" id="total_${p.id}">R$ ${Number(p.total).toFixed(2).replace('.',',')}</td>
+      <td><button class="btn btn-danger" onclick="excluirPedido('${p.id}')">Remover</button></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('totalDia').textContent='R$ '+totalGeral.toFixed(2).replace('.',',');
+}
+
+async function editarCampo(id, campo, valor) {
+  // encontra pedido local
+  const idx = modoDemo
+    ? demoPedidos.findIndex(p=>p.id===id)
+    : pedidosDia.findIndex(p=>p.id===id);
+  const pedido = modoDemo ? demoPedidos[idx] : pedidosDia[idx];
+  if(!pedido) return;
+
+  let update = {};
+  if(campo==='funcionario') {
+    const func = funcionarios.find(f=>f.id===valor);
+    if(!func) return;
+    update = {funcionario_id:func.id, funcionario_nome:func.nome, funcionario_setor:func.setor};
+    pedido.funcionario_id=func.id; pedido.funcionario_nome=func.nome; pedido.funcionario_setor=func.setor;
+  } else if(campo==='item') {
+    const item = cardapio.find(i=>i.id===valor);
+    if(!item) return;
+    const novoPreco = item.preco_variavel ? pedido.item_preco : Number(item.preco);
+    const novoTotal = novoPreco * pedido.quantidade;
+    update = {item_id:item.id, item_nome:item.nome, item_preco:novoPreco, total:novoTotal};
+    pedido.item_id=item.id; pedido.item_nome=item.nome; pedido.item_preco=novoPreco; pedido.total=novoTotal;
+  } else if(campo==='quantidade') {
+    const qtd = Math.max(1, parseInt(valor)||1);
+    const novoTotal = pedido.item_preco * qtd;
+    update = {quantidade:qtd, total:novoTotal};
+    pedido.quantidade=qtd; pedido.total=novoTotal;
+  } else if(campo==='preco') {
+    const preco = parseFloat(valor)||0;
+    const novoTotal = preco * pedido.quantidade;
+    update = {item_preco:preco, total:novoTotal};
+    pedido.item_preco=preco; pedido.total=novoTotal;
+  } else if(campo==='observacao') {
+    update = {observacao: valor||null};
+    pedido.observacao=valor||null;
+  }
+
+  if(!modoDemo && sb) {
+    const {error} = await sb.from('marmitas_pedidos').update(update).eq('id',id);
+    if(error){toast('Erro ao salvar: '+error.message);return;}
+  }
+
+  // atualiza total da linha e rodapé sem re-renderizar tudo
+  if(update.total!==undefined){
+    const el=document.getElementById('total_'+id);
+    if(el) el.textContent='R$ '+Number(pedido.total).toFixed(2).replace('.',',');
+  }
+  // recalcula total do dia
+  const todos = modoDemo ? demoPedidos.filter(p=>p.data===pedidosDia[0]?.data) : pedidosDia;
+  const soma = todos.reduce((s,p)=>s+Number(p.total),0);
+  document.getElementById('totalDia').textContent='R$ '+soma.toFixed(2).replace('.',',');
+  // atualiza badge setor se mudou funcionário
+  if(campo==='funcionario') renderPedidosDia();
+  toast('✓ Salvo');
+}
+
+async function excluirPedido(id) {
+  if(modoDemo){demoPedidos=demoPedidos.filter(p=>p.id!==id);}
+  else{await sb.from('marmitas_pedidos').delete().eq('id',id);}
+  carregarPedidosDia(); toast('Pedido removido');
+}
+
+// ---- WHATSAPP ----
+function gerarWhatsApp() {
+  if(!pedidosDia.length){toast('Sem pedidos para gerar');return;}
+  const data=document.getElementById('dataPedido').value;
+  const [y,m,d]=data.split('-');
+  const grupos={};
+  pedidosDia.forEach(p=>{if(!grupos[p.item_nome])grupos[p.item_nome]=[];grupos[p.item_nome].push(p);});
+  let msg=`🍱 *PEDIDO MARMITAS – ${d}/${m}/${y}*\n━━━━━━━━━━━━━━━━\n\n`;
+  Object.entries(grupos).forEach(([item,pedidos])=>{
+    msg+=`*${item}* (${pedidos.reduce((s,p)=>s+p.quantidade,0)}x)\n`;
+    pedidos.forEach(p=>{
+      msg+=`  • ${p.funcionario_nome}`;
+      if(p.quantidade>1)msg+=` (${p.quantidade}x)`;
+      if(p.observacao)msg+=` — _${p.observacao}_`;
+      msg+=`\n`;
+    });
+    msg+=`\n`;
+  });
+  const total=pedidosDia.reduce((s,p)=>s+Number(p.total),0);
+  msg+=`━━━━━━━━━━━━━━━━\n*Total: R$ ${total.toFixed(2).replace('.',',')}*\n(${pedidosDia.length} pedidos)`;
+  document.getElementById('wppText').textContent=msg;
+  document.getElementById('wppBox').style.display='block';
+  document.getElementById('wppBox').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function copiarWpp() {
+  const txt=document.getElementById('wppText').textContent;
+  navigator.clipboard.writeText(txt).then(()=>toast('Mensagem copiada!')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);
+    ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('Mensagem copiada!');
+  });
+}
+
+// ---- HISTÓRICO ----
+async function carregarHistorico() {
+  const de=document.getElementById('histDe').value;
+  const ate=document.getElementById('histAte').value;
+  let rows=[];
+  if(modoDemo){rows=demoPedidos.filter(p=>p.data>=de&&p.data<=ate);}
+  else if(sb){const {data}=await sb.from('marmitas_pedidos').select('*').gte('data',de).lte('data',ate).order('data').order('funcionario_nome');rows=data||[];}
+  const tbody=document.getElementById('historicoBody');
+  const empty=document.getElementById('histEmpty');
+  if(!rows.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=rows.map(p=>{
+    const [y,m,d]=p.data.split('-');
+    return `<tr>
+      <td style="font-family:'DM Mono',monospace;font-size:12px;">${d}/${m}</td>
+      <td style="font-weight:500;">${p.funcionario_nome}</td>
+      <td><span class="badge badge-${badgeSetor(p.funcionario_setor)}">${p.funcionario_setor}</span></td>
+      <td>${p.item_nome}</td>
+      <td style="text-align:center;">${p.quantidade}</td>
+      <td style="font-family:'DM Mono',monospace;color:var(--accent);">R$ ${Number(p.total).toFixed(2).replace('.',',')}</td>
+      <td style="font-size:12px;color:var(--text3);">${p.observacao||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ---- RELATÓRIO ----
+async function gerarRelatorio() {
+  const mes=parseInt(document.getElementById('relMes').value);
+  const ano=parseInt(document.getElementById('relAno').value);
+  const qz=parseInt(document.getElementById('relQuinzena').value);
+  const dI=qz===1?1:16, dF=qz===1?15:31;
+  const dataIni=`${ano}-${String(mes).padStart(2,'0')}-${String(dI).padStart(2,'0')}`;
+  const dataFim=`${ano}-${String(mes).padStart(2,'0')}-${String(dF).padStart(2,'0')}`;
+  let rows=[];
+  if(modoDemo){rows=demoPedidos.filter(p=>p.data>=dataIni&&p.data<=dataFim);}
+  else if(sb){const {data}=await sb.from('marmitas_pedidos').select('*').gte('data',dataIni).lte('data',dataFim).order('data').order('funcionario_nome');rows=data||[];}
+  if(!rows.length){toast('Sem dados neste período');return;}
+  const meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  document.getElementById('relPeriodoLabel').textContent=`${qz}ª quinzena de ${meses[mes-1]}/${ano} (dias ${dI}–${dF})`;
+  document.getElementById('relTotalPedidos').textContent=rows.length+' pedidos';
+  const totalG=rows.reduce((s,p)=>s+Number(p.total),0);
+  document.getElementById('relTotalGeral').textContent='R$ '+totalG.toFixed(2).replace('.',',');
+  const porFunc={};
+  rows.forEach(p=>{
+    if(!porFunc[p.funcionario_id])porFunc[p.funcionario_id]={nome:p.funcionario_nome,setor:p.funcionario_setor,total:0,count:0};
+    porFunc[p.funcionario_id].total+=Number(p.total);
+    porFunc[p.funcionario_id].count+=p.quantidade;
+  });
+  document.getElementById('relFuncBody').innerHTML=Object.values(porFunc).sort((a,b)=>b.total-a.total).map(f=>
+    `<tr><td style="font-weight:500;">${f.nome}</td>
+    <td><span class="badge badge-${badgeSetor(f.setor)}">${f.setor}</span></td>
+    <td style="text-align:center;">${f.count}</td>
+    <td style="font-family:'DM Mono',monospace;font-weight:600;color:var(--accent);">R$ ${f.total.toFixed(2).replace('.',',')}</td></tr>`
+  ).join('');
+  document.getElementById('relDiaBody').innerHTML=rows.map(p=>{
+    const [y,m2,d]=p.data.split('-');
+    return `<tr>
+      <td style="font-family:'DM Mono',monospace;font-size:12px;">${d}/${m2}</td>
+      <td style="font-weight:500;">${p.funcionario_nome}</td>
+      <td>${p.item_nome}</td>
+      <td style="text-align:center;">${p.quantidade}</td>
+      <td style="font-family:'DM Mono',monospace;color:var(--accent);">R$ ${Number(p.total).toFixed(2).replace('.',',')}</td>
+      <td style="font-size:12px;color:var(--text3);">${p.observacao||'—'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('relResultado').style.display='block';
+  document.getElementById('relResultado').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ---- CONFIG CARDÁPIO ----
+async function adicionarItem() {
+  const nome=document.getElementById('novoItemNome').value.trim();
+  const preco=parseFloat(document.getElementById('novoItemPreco').value)||0;
+  const variavel=document.getElementById('novoItemVariavel').checked;
+  if(!nome){toast('Digite o nome');return;}
+  if(modoDemo){cardapio.push({id:'i'+Date.now(),nome,preco,preco_variavel:variavel});}
+  else{const {data,error}=await sb.from('marmitas_cardapio').insert([{nome,preco,preco_variavel:variavel}]).select().single();if(error){toast('Erro: '+error.message);return;}cardapio.push(data);}
+  document.getElementById('novoItemNome').value='';
+  document.getElementById('novoItemPreco').value='';
+  document.getElementById('novoItemVariavel').checked=false;
+  renderCardapioConfig(); toast('Item adicionado');
+}
+async function removerItem(id) {
+  if(modoDemo){cardapio=cardapio.filter(i=>i.id!==id);}
+  else{await sb.from('marmitas_cardapio').update({ativo:false}).eq('id',id);cardapio=cardapio.filter(i=>i.id!==id);}
+  renderCardapioConfig();
+}
+function renderCardapioConfig() {
+  document.getElementById('cardapioBody').innerHTML=cardapio.map(i=>
+    `<tr><td>${i.nome}</td>
+    <td style="font-family:'DM Mono',monospace;">${i.preco_variavel?'variável':'R$ '+Number(i.preco).toFixed(2).replace('.',',')}</td>
+    <td>${i.preco_variavel?'✓':''}</td>
+    <td><button class="btn btn-danger" onclick="removerItem('${i.id}')">Remover</button></td></tr>`
+  ).join('')||'<tr><td colspan="4" class="empty">Nenhum item cadastrado</td></tr>';
+}
+
+// ---- CONFIG FUNCIONÁRIOS ----
+async function adicionarFuncionario() {
+  const nome=document.getElementById('novoFuncNome').value.trim();
+  const setor=document.getElementById('novoFuncSetor').value;
+  if(!nome){toast('Digite o nome');return;}
+  if(modoDemo){funcionarios.push({id:'f'+Date.now(),nome,setor});}
+  else{const {data,error}=await sb.from('marmitas_funcionarios').insert([{nome,setor}]).select().single();if(error){toast('Erro: '+error.message);return;}funcionarios.push(data);}
+  document.getElementById('novoFuncNome').value='';
+  renderFuncConfig(); renderFuncionarios(); toast('Funcionário adicionado');
+}
+async function removerFuncionario(id) {
+  if(modoDemo){funcionarios=funcionarios.filter(f=>f.id!==id);}
+  else{await sb.from('marmitas_funcionarios').update({ativo:false}).eq('id',id);funcionarios=funcionarios.filter(f=>f.id!==id);}
+  renderFuncConfig(); renderFuncionarios();
+}
+function renderFuncConfig() {
+  document.getElementById('funcConfigBody').innerHTML=funcionarios.map(f=>
+    `<tr><td style="font-weight:500;">${f.nome}</td>
+    <td><span class="badge badge-${badgeSetor(f.setor)}">${f.setor}</span></td>
+    <td><button class="btn btn-danger" onclick="removerFuncionario('${f.id}')">Remover</button></td></tr>`
+  ).join('')||'<tr><td colspan="3" class="empty">Nenhum funcionário cadastrado</td></tr>';
+}
+
+function copiarSQL() {
+  navigator.clipboard.writeText(SQL_TABLES).then(()=>toast('SQL copiado!')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=SQL_TABLES;document.body.appendChild(ta);
+    ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('SQL copiado!');
+  });
+}
+
+function toast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+</script>
+</body>
+</html>
