@@ -280,6 +280,72 @@ select:focus,input:focus{border-color:var(--accent);}
     </div>
   </div>
 
+  <!-- RELATÓRIO MENSAL -->
+  <div class="page" id="page-mensal">
+    <div class="card">
+      <div class="card-title">Relatório do mês completo</div>
+      <div class="row-gap">
+        <div class="form-group"><label>Mês</label>
+          <select id="mensalMes">
+            <option value="1">Jan</option><option value="2">Fev</option><option value="3">Mar</option>
+            <option value="4">Abr</option><option value="5">Mai</option><option value="6">Jun</option>
+            <option value="7">Jul</option><option value="8">Ago</option><option value="9">Set</option>
+            <option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Ano</label><input type="number" id="mensalAno" value="2026"></div>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="gerarMensal()">Gerar relatório mensal</button>
+    </div>
+
+    <div id="mensalResultado" style="display:none;">
+
+      <!-- TOTAIS -->
+      <div class="total-card">
+        <div>
+          <div class="total-label" id="mensalPeriodoLabel"></div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px;" id="mensalTotalPedidos"></div>
+        </div>
+        <div class="total-value" id="mensalTotalGeral"></div>
+      </div>
+
+      <!-- RESTAURANTE -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+          <div>
+            <div class="card-title" style="margin:0;">🍽️ Resumo para o restaurante</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:3px;">Total por item no mês — sem nome de funcionário</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="copiarRestaurante()">Copiar</button>
+        </div>
+        <div id="mensalRestauranteList"></div>
+        <div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;font-weight:600;color:var(--text2);">Total do mês</span>
+          <span style="font-size:16px;font-weight:600;color:var(--accent);font-family:'DM Mono',monospace;" id="mensalTotalRest"></span>
+        </div>
+      </div>
+
+      <!-- FUNCIONÁRIOS -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+          <div>
+            <div class="card-title" style="margin:0;">👥 Resumo por funcionário</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:3px;">Total e detalhamento do mês inteiro</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="copiarFuncionarios()">Copiar</button>
+        </div>
+        <div id="mensalFuncList"></div>
+      </div>
+
+      <!-- DIA A DIA -->
+      <div class="card">
+        <div class="card-title">Dia a dia completo</div>
+        <div id="mensalDiaList"></div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- CONFIG -->
   <div class="page" id="page-config">
     <div class="card">
@@ -330,7 +396,11 @@ select:focus,input:focus{border-color:var(--accent);}
   </button>
   <button class="nav-item" onclick="showPage('relatorio',this)">
     <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-    Relatório
+    Quinzena
+  </button>
+  <button class="nav-item" onclick="showPage('mensal',this)">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Mensal
   </button>
   <button class="nav-item" onclick="showPage('config',this)">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -395,6 +465,9 @@ function setRelatorioDefault(){
   document.getElementById('relMes').value = parseInt(d.month);
   document.getElementById('relAno').value = parseInt(d.year);
   document.getElementById('relQuinzena').value = parseInt(d.day) <= 15 ? '1' : '2';
+  // mensal usa os mesmos valores
+  document.getElementById('mensalMes').value = parseInt(d.month);
+  document.getElementById('mensalAno').value = parseInt(d.year);
 }
 
 function salvarConfig(){
@@ -893,6 +966,161 @@ function renderFuncConfigList(){
       <button class="btn btn-danger btn-sm" onclick="removerFuncionario('${f.id}')">×</button>
     </div>`
   ).join('')||'<p class="empty">Nenhum funcionário cadastrado.</p>';
+}
+
+// ── RELATÓRIO MENSAL ──
+let _mensalRows=[]; // cache para as funções de cópia
+
+async function gerarMensal(){
+  const mes=parseInt(document.getElementById('mensalMes').value);
+  const ano=parseInt(document.getElementById('mensalAno').value);
+  const dataIni=`${ano}-${String(mes).padStart(2,'0')}-01`;
+  const dataFim=`${ano}-${String(mes).padStart(2,'0')}-31`;
+  const meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  let rows=[];
+  if(modoDemo){rows=demoPedidos.filter(p=>p.data>=dataIni&&p.data<=dataFim);}
+  else if(sb){
+    const{data,error}=await sb.from('marmitas_pedidos').select('*')
+      .gte('data',dataIni).lte('data',dataFim)
+      .order('data').order('funcionario_nome');
+    if(error){toast('Erro: '+error.message);return;}
+    rows=data||[];
+  }
+  if(!rows.length){toast('Sem dados neste mês');return;}
+  _mensalRows=rows;
+
+  const label=`${meses[mes-1]} / ${ano}`;
+  document.getElementById('mensalPeriodoLabel').textContent=label;
+  document.getElementById('mensalTotalPedidos').textContent=rows.length+' pedidos';
+  const tG=rows.reduce((s,p)=>s+Number(p.total),0);
+  document.getElementById('mensalTotalGeral').textContent='R$ '+fmt(tG);
+
+  // ── RESTAURANTE: agrupa por item ──
+  const porItem={};
+  rows.forEach(p=>{
+    if(!porItem[p.item_nome])porItem[p.item_nome]={nome:p.item_nome,qty:0,total:0};
+    porItem[p.item_nome].qty+=p.quantidade;
+    porItem[p.item_nome].total+=Number(p.total);
+  });
+  const itensOrdenados=Object.values(porItem).sort((a,b)=>b.total-a.total);
+  document.getElementById('mensalRestauranteList').innerHTML=itensOrdenados.map(i=>
+    `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">
+      <div>
+        <div style="font-size:14px;font-weight:500;">${esc(i.nome)}</div>
+        <div style="font-size:12px;color:var(--text3);">${i.qty} unidade${i.qty>1?'s':''}</div>
+      </div>
+      <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--accent);">R$ ${fmt(i.total)}</span>
+    </div>`
+  ).join('');
+  document.getElementById('mensalTotalRest').textContent='R$ '+fmt(tG);
+
+  // ── FUNCIONÁRIOS: agrupa por pessoa ──
+  const porFunc={};
+  rows.forEach(p=>{
+    if(!porFunc[p.funcionario_id])porFunc[p.funcionario_id]={nome:p.funcionario_nome,setor:p.funcionario_setor,total:0,count:0,dias:[]};
+    porFunc[p.funcionario_id].total+=Number(p.total);
+    porFunc[p.funcionario_id].count+=p.quantidade;
+    porFunc[p.funcionario_id].dias.push(p);
+  });
+  document.getElementById('mensalFuncList').innerHTML=Object.values(porFunc).sort((a,b)=>b.total-a.total).map(f=>{
+    const diasHtml=f.dias.map(p=>{
+      const[y,m2,d]=p.data.split('-');
+      return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);">
+        <div style="font-size:12px;color:var(--text2);">${d}/${m2} · ${esc(p.item_nome)}${p.quantidade>1?' ×'+p.quantidade:''}</div>
+        <span style="font-size:12px;font-family:'DM Mono',monospace;color:var(--text2);">R$ ${fmt(p.total)}</span>
+      </div>`;
+    }).join('');
+    return `<div style="margin-bottom:14px;border:1px solid var(--border);border-radius:var(--rsm);overflow:hidden;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface2);">
+        <div>
+          <div style="font-size:14px;font-weight:600;">${esc(f.nome)}</div>
+          <span class="badge badge-${badgeSetor(f.setor)}" style="margin-top:3px;">${f.setor}</span>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:16px;font-weight:700;color:var(--accent);font-family:'DM Mono',monospace;">R$ ${fmt(f.total)}</div>
+          <div style="font-size:11px;color:var(--text3);">${f.count} itens</div>
+        </div>
+      </div>
+      <div style="padding:0 12px 4px;">${diasHtml}</div>
+    </div>`;
+  }).join('');
+
+  // ── DIA A DIA ──
+  const porData={};
+  rows.forEach(p=>{if(!porData[p.data])porData[p.data]=[];porData[p.data].push(p);});
+  document.getElementById('mensalDiaList').innerHTML=Object.entries(porData).map(([data,pedidos])=>{
+    const[y,m2,d]=data.split('-');
+    const totalDia=pedidos.reduce((s,p)=>s+Number(p.total),0);
+    return `<div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:2px solid var(--border);">
+        <span style="font-size:13px;font-weight:700;">${d}/${m2}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--accent);">R$ ${fmt(totalDia)}</span>
+      </div>
+      ${pedidos.map(p=>`<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--border);">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:500;">${esc(p.funcionario_nome)}</div>
+          <div style="font-size:12px;color:var(--text2);">${esc(p.item_nome)}${p.quantidade>1?' ×'+p.quantidade:''}</div>
+          ${p.observacao?`<div style="font-size:11px;color:var(--text3);">${esc(p.observacao)}</div>`:''}
+        </div>
+        <span style="font-size:13px;font-family:'DM Mono',monospace;color:var(--accent);margin-left:10px;flex-shrink:0;">R$ ${fmt(p.total)}</span>
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+
+  document.getElementById('mensalResultado').style.display='block';
+  document.getElementById('mensalResultado').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function copiarRestaurante(){
+  const mes=parseInt(document.getElementById('mensalMes').value);
+  const ano=parseInt(document.getElementById('mensalAno').value);
+  const meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const porItem={};
+  _mensalRows.forEach(p=>{
+    if(!porItem[p.item_nome])porItem[p.item_nome]={qty:0,total:0};
+    porItem[p.item_nome].qty+=p.quantidade;
+    porItem[p.item_nome].total+=Number(p.total);
+  });
+  const total=_mensalRows.reduce((s,p)=>s+Number(p.total),0);
+  let txt=`🍽️ RESUMO MARMITAS – ${meses[mes-1]}/${ano}\n`;
+  txt+=`━━━━━━━━━━━━━━━━\n\n`;
+  Object.entries(porItem).sort((a,b)=>b[1].total-a[1].total).forEach(([nome,v])=>{
+    txt+=`• ${nome}: ${v.qty}x — R$ ${fmt(v.total)}\n`;
+  });
+  txt+=`\n━━━━━━━━━━━━━━━━\n`;
+  txt+=`*Total: R$ ${fmt(total)}*`;
+  navigator.clipboard.writeText(txt).then(()=>toast('Copiado!')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('Copiado!');
+  });
+}
+
+function copiarFuncionarios(){
+  const mes=parseInt(document.getElementById('mensalMes').value);
+  const ano=parseInt(document.getElementById('mensalAno').value);
+  const meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const porFunc={};
+  _mensalRows.forEach(p=>{
+    if(!porFunc[p.funcionario_id])porFunc[p.funcionario_id]={nome:p.funcionario_nome,total:0,dias:[]};
+    porFunc[p.funcionario_id].total+=Number(p.total);
+    porFunc[p.funcionario_id].dias.push(p);
+  });
+  const total=_mensalRows.reduce((s,p)=>s+Number(p.total),0);
+  let txt=`👥 MARMITAS POR FUNCIONÁRIO – ${meses[mes-1]}/${ano}\n`;
+  txt+=`━━━━━━━━━━━━━━━━\n\n`;
+  Object.values(porFunc).sort((a,b)=>b.total-a.total).forEach(f=>{
+    txt+=`*${f.nome}* — R$ ${fmt(f.total)}\n`;
+    f.dias.forEach(p=>{
+      const[y,m2,d]=p.data.split('-');
+      txt+=`  ${d}/${m2}: ${p.item_nome}${p.quantidade>1?' ×'+p.quantidade:''} — R$ ${fmt(p.total)}\n`;
+    });
+    txt+=`\n`;
+  });
+  txt+=`━━━━━━━━━━━━━━━━\n`;
+  txt+=`*Total geral: R$ ${fmt(total)}*`;
+  navigator.clipboard.writeText(txt).then(()=>toast('Copiado!')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('Copiado!');
+  });
 }
 
 function toast(msg){
