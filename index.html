@@ -441,6 +441,7 @@ function showPage(p,btn){
 }
 function badgeSetor(s){return s==='Banho'?'banho':s==='Recepção'?'recepcao':s==='Mesa'?'mesa':'geral';}
 function fmt(v){return Number(v).toFixed(2).replace('.',',');}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 // ── GRID FUNCIONÁRIOS ──
 function renderFuncionarios(){
@@ -455,7 +456,7 @@ function renderFuncionarios(){
     const itens=pMap[f.id]||[], tem=itens.length>0;
     const resumo=itens.map(p=>p.item_nome+(p.quantidade>1?` ×${p.quantidade}`:'')).join(', ');
     return `<div class="func-card${tem?' selected':''}" onclick="abrirModal('${f.id}')">
-      <div class="fname">${f.nome}</div>
+      <div class="fname">${esc(f.nome)}</div>
       <div class="fsetor">${f.setor}</div>
       ${tem?`<div class="fitens">${resumo}</div>`:''}
     </div>`;
@@ -510,7 +511,7 @@ function renderModalItens(){
         </div>
         <div>
           <label>Observação <span style="font-weight:400;color:var(--text3);">(ex: sem cebola...)</span></label>
-          <input type="text" id="obs_${item.id}" value="${obs}" placeholder="Descreva o pedido..." oninput="updateObs('${item.id}',this.value)">
+          <input type="text" id="obs_${item.id}" value="${esc(obs)}" placeholder="Descreva o pedido..." oninput="updateObs('${item.id}',this.value)">
         </div>
       </div>
     </div>`;
@@ -605,17 +606,17 @@ function renderPedidosDia(){
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
             <select style="font-size:13px;padding:5px 8px;max-width:160px;flex:1;" onchange="editarCampo('${p.id}','item',this.value)">
-              ${cardapio.map(i=>`<option value="${i.id}"${i.id===p.item_id?' selected':''}>${i.nome}</option>`).join('')}
+              ${cardapio.map(i=>`<option value="${i.id}"${i.id===p.item_id?' selected':''}>${esc(i.nome)}</option>`).join('')}
             </select>
             <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
               <button class="qty-btn" style="width:30px;height:30px;font-size:16px;" onclick="editarQty('${p.id}',-1)">−</button>
               <span id="pqty_${p.id}" style="font-size:14px;font-weight:600;min-width:20px;text-align:center;">${p.quantidade}</span>
               <button class="qty-btn" style="width:30px;height:30px;font-size:16px;" onclick="editarQty('${p.id}',1)">+</button>
             </div>
-            <input type="number" value="${fmt(p.item_preco)}" step="0.01" min="0" style="width:78px;" placeholder="R$"
+            <input type="number" value="${Number(p.item_preco).toFixed(2)}" step="0.01" min="0" style="width:78px;" placeholder="R$"
               onchange="editarCampo('${p.id}','preco',this.value)">
           </div>
-          <input type="text" value="${p.observacao||''}" placeholder="Observação..." style="width:100%;font-size:13px;"
+          <input type="text" value="${esc(p.observacao)}" placeholder="Observação..." style="width:100%;font-size:13px;"
             onchange="editarCampo('${p.id}','observacao',this.value)">
           <div style="margin-top:6px;display:flex;align-items:center;justify-content:space-between;">
             <span style="font-size:13px;font-family:'DM Mono',monospace;color:var(--accent);" id="ptotal_${p.id}">R$ ${fmt(p.total)}</span>
@@ -626,7 +627,7 @@ function renderPedidosDia(){
     return `<div class="pedido-card">
       <div class="pedido-card-top">
         <div>
-          <div class="pedido-func">${g.func.funcionario_nome}</div>
+          <div class="pedido-func">${esc(g.func.funcionario_nome)}</div>
           <span class="badge badge-${badgeSetor(g.func.funcionario_setor)}" style="margin-top:3px;">${g.func.funcionario_setor}</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
@@ -747,9 +748,9 @@ async function carregarHistorico(){
       </div>
       ${pedidos.map(p=>`<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-top:1px solid var(--border);">
         <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:500;">${p.funcionario_nome}</div>
+          <div style="font-size:13px;font-weight:500;">${esc(p.funcionario_nome)}</div>
           <div style="font-size:12px;color:var(--text2);">${p.item_nome}${p.quantidade>1?' ×'+p.quantidade:''}</div>
-          ${p.observacao?`<div style="font-size:11px;color:var(--text3);">${p.observacao}</div>`:''}
+          ${p.observacao?`<div style="font-size:11px;color:var(--text3);">${esc(p.observacao)}</div>`:''}
         </div>
         <span style="font-size:13px;font-family:'DM Mono',monospace;color:var(--accent);margin-left:10px;flex-shrink:0;">R$ ${fmt(p.total)}</span>
       </div>`).join('')}
@@ -787,7 +788,7 @@ async function gerarRelatorio(){
   });
   document.getElementById('relFuncList').innerHTML=Object.values(pF).sort((a,b)=>b.total-a.total).map(f=>
     `<div class="rel-func-card">
-      <div><div style="font-size:14px;font-weight:600;">${f.nome}</div>
+      <div><div style="font-size:14px;font-weight:600;">${esc(f.nome)}</div>
       <span class="badge badge-${badgeSetor(f.setor)}" style="margin-top:3px;">${f.setor}</span></div>
       <div style="text-align:right;">
         <div style="font-size:16px;font-weight:600;color:var(--accent);font-family:'DM Mono',monospace;">R$ ${fmt(f.total)}</div>
@@ -799,11 +800,11 @@ async function gerarRelatorio(){
     const[y,m2,d]=p.data.split('-');
     return `<div class="rel-dia-item">
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-weight:500;font-size:13px;">${p.funcionario_nome}</span>
+        <span style="font-weight:500;font-size:13px;">${esc(p.funcionario_nome)}</span>
         <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--accent);">R$ ${fmt(p.total)}</span>
       </div>
       <div style="font-size:12px;color:var(--text2);">${d}/${m2} · ${p.item_nome}${p.quantidade>1?' ×'+p.quantidade:''}</div>
-      ${p.observacao?`<div style="font-size:11px;color:var(--text3);">${p.observacao}</div>`:''}
+      ${p.observacao?`<div style="font-size:11px;color:var(--text3);">${esc(p.observacao)}</div>`:''}
     </div>`;
   }).join('');
   document.getElementById('relResultado').style.display='block';
@@ -841,9 +842,9 @@ function renderCardapioList(){
   document.getElementById('cardapioList').innerHTML=cardapio.map(i=>
     `<div class="config-item">
       <div class="config-item-info">
-        <input type="text" value="${i.nome.replace(/"/g,'&quot;')}" style="margin-bottom:6px;width:100%;" onchange="editarItem('${i.id}','nome',this.value)">
+        <input type="text" value="${esc(i.nome)}" style="margin-bottom:6px;width:100%;" onchange="editarItem('${i.id}','nome',this.value)">
         <div style="display:flex;align-items:center;gap:8px;">
-          <input type="number" value="${fmt(i.preco)}" step="0.01" min="0" style="width:100px;" placeholder="R$"
+          <input type="number" value="${Number(i.preco).toFixed(2)}" step="0.01" min="0" style="width:100px;" placeholder="R$"
             ${i.preco_variavel?'disabled':''} onchange="editarItem('${i.id}','preco',this.value)">
           <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);cursor:pointer;white-space:nowrap;">
             <input type="checkbox" ${i.preco_variavel?'checked':''} style="width:15px;height:15px;"
@@ -884,7 +885,7 @@ function renderFuncConfigList(){
   document.getElementById('funcConfigList').innerHTML=funcionarios.map(f=>
     `<div class="config-item">
       <div class="config-item-info">
-        <input type="text" value="${f.nome.replace(/"/g,'&quot;')}" style="margin-bottom:6px;width:100%;" onchange="editarFuncionario('${f.id}','nome',this.value)">
+        <input type="text" value="${esc(f.nome)}" style="margin-bottom:6px;width:100%;" onchange="editarFuncionario('${f.id}','nome',this.value)">
         <select onchange="editarFuncionario('${f.id}','setor',this.value)" style="width:auto;">
           ${['Banho','Recepção','Mesa','Geral'].map(s=>`<option${s===f.setor?' selected':''}>${s}</option>`).join('')}
         </select>
@@ -902,3 +903,4 @@ function toast(msg){
 </script>
 </body>
 </html>
+
