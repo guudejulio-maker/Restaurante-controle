@@ -129,6 +129,45 @@ select:focus,input:focus{border-color:var(--accent);}
 .config-box{background:var(--surface);border-radius:16px 16px 0 0;padding:24px 20px 32px;width:100%;max-width:600px;}
 .config-box h2{font-size:17px;font-weight:600;margin-bottom:6px;}
 .config-box p{font-size:13px;color:var(--text2);margin-bottom:18px;line-height:1.6;}
+
+/* PAGAMENTOS */
+.pag-quinzena-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden;}
+.pag-quinzena-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none;}
+.pag-quinzena-header:active{opacity:0.75;}
+.pag-quinzena-header h4{font-size:14px;font-weight:600;}
+.pag-quinzena-header .pag-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+.pag-badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+.pag-badge-ok{background:#dcfce7;color:#166534;}
+.pag-badge-pendente{background:#fef9c3;color:#854d0e;}
+.pag-badge-divergencia{background:#fee2e2;color:#991b1b;}
+.pag-body{padding:12px 14px;border-top:1px solid var(--border);background:var(--surface2);display:none;}
+.pag-body.open{display:block;}
+.pag-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.pag-row label{font-size:12px;color:var(--text2);font-weight:500;min-width:100px;}
+.pag-row input{flex:1;min-width:120px;font-size:14px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--rsm);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-appearance:none;}
+.pag-row input:focus{border-color:var(--accent);outline:none;}
+.pag-diff{border-radius:var(--rsm);padding:10px 12px;margin-top:4px;margin-bottom:10px;font-size:13px;}
+.pag-diff-ok{background:#dcfce7;color:#166534;}
+.pag-diff-neg{background:#fee2e2;color:#991b1b;}
+.pag-diff-warn{background:#fef9c3;color:#854d0e;}
+.pag-resumo-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.pag-resumo-row:last-child{border-bottom:none;font-weight:700;}
+.pag-ano-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;margin-top:12px;}
+.pag-ano-header h3{font-size:15px;font-weight:700;color:var(--text2);}
+.pag-totais-ano{background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--r);padding:12px 14px;margin-bottom:14px;}
+
+/* PRINT */
+@media print{
+  .nav-bottom,.header,.btn,.wpp-box,.btn-print-hide,
+  #relBtnImprimir,#relBtnPdf,.page:not(.active){display:none!important;}
+  body{background:#fff;padding:0;font-size:12px;}
+  .main{max-width:100%;padding:0;}
+  .page.active{display:block!important;}
+  .card{border:1px solid #ccc;margin-bottom:8px;break-inside:avoid;}
+  .total-card{break-inside:avoid;}
+  .rel-func-card{break-inside:avoid;}
+  @page{margin:15mm 12mm;}
+}
 </style>
 </head>
 <body>
@@ -271,12 +310,17 @@ select:focus,input:focus{border-color:var(--accent);}
       <button class="btn btn-primary btn-full" onclick="gerarRelatorio()">Gerar relatório</button>
     </div>
     <div id="relResultado" style="display:none;">
+      <div style="display:flex;gap:8px;margin-bottom:12px;" id="relBtnImprimir">
+        <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="imprimirRelatorio()">🖨️ Imprimir / PDF</button>
+        <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="copiarRelatorioTexto()">📋 Copiar texto</button>
+      </div>
       <div class="total-card">
         <div><div class="total-label" id="relPeriodoLabel"></div><div style="font-size:12px;color:var(--text3);margin-top:2px;" id="relTotalPedidos"></div></div>
         <div class="total-value" id="relTotalGeral"></div>
       </div>
       <div class="card"><div class="card-title">Por funcionário</div><div id="relFuncList"></div></div>
       <div class="card"><div class="card-title">Dia a dia</div><div id="relDiaList"></div></div>
+      <div class="card" id="relFuncDetalhe"><div class="card-title">Detalhe por funcionário</div><div id="relFuncDetalheList"></div></div>
     </div>
   </div>
 
@@ -346,6 +390,45 @@ select:focus,input:focus{border-color:var(--accent);}
     </div>
   </div>
 
+  <!-- PAGAMENTOS -->
+  <div class="page" id="page-pagamentos">
+    <div class="card">
+      <div class="card-title">Lançar pagamento</div>
+      <div class="row-gap">
+        <div class="form-group"><label>Mês</label>
+          <select id="pagMes">
+            <option value="1">Jan</option><option value="2">Fev</option><option value="3">Mar</option>
+            <option value="4">Abr</option><option value="5">Mai</option><option value="6">Jun</option>
+            <option value="7">Jul</option><option value="8">Ago</option><option value="9">Set</option>
+            <option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option>
+          </select>
+        </div>
+        <div class="form-group" style="max-width:90px;"><label>Ano</label><input type="number" id="pagAno" value="2026"></div>
+        <div class="form-group" style="max-width:110px;"><label>Quinzena</label>
+          <select id="pagQuinzena"><option value="1">1ª (1–15)</option><option value="2">2ª (16–31)</option></select>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <div class="form-group"><label>R$ cobrado pelo restaurante</label><input type="number" id="pagCobrado" step="0.01" min="0" placeholder="0,00"></div>
+        <div class="form-group"><label>R$ pago (se diferente)</label><input type="number" id="pagPago" step="0.01" min="0" placeholder="Deixar vazio = igual ao cobrado"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;"><label>Data do pagamento</label><input type="date" id="pagData"></div>
+      <div class="form-group" style="margin-bottom:12px;"><label>Observação</label><input type="text" id="pagObs" placeholder="Ex: boleto 001, divergência explicada..."></div>
+      <button class="btn btn-primary btn-full" onclick="salvarPagamento()">💾 Salvar pagamento</button>
+    </div>
+    <div id="pagHistoricoWrap">
+      <div class="pag-ano-header">
+        <h3>Histórico</h3>
+        <select id="pagFiltroAno" onchange="carregarPagamentos()" style="font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--rsm);background:var(--surface);-webkit-appearance:none;">
+          <option value="2026">2026</option><option value="2025">2025</option>
+        </select>
+      </div>
+      <div id="pagTotaisAno" class="pag-totais-ano" style="display:none;"></div>
+      <div id="pagLista"></div>
+      <div id="pagEmpty" class="empty" style="display:none;">Nenhum pagamento registrado.</div>
+    </div>
+  </div>
+
   <!-- CONFIG -->
   <div class="page" id="page-config">
     <div class="card">
@@ -402,6 +485,10 @@ select:focus,input:focus{border-color:var(--accent);}
     <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
     Mensal
   </button>
+  <button class="nav-item" onclick="showPage('pagamentos',this)">
+    <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+    Pagamentos
+  </button>
   <button class="nav-item" onclick="showPage('config',this)">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     Config
@@ -438,7 +525,7 @@ window.onload=()=>{
   const key=localStorage.getItem('sb_key')||'sb_publishable_t2QO6bLM9jfxhzPWNaT7nw_xnhBIYOF';
   document.getElementById('cfgUrl').value=url;
   document.getElementById('cfgKey').value=key;
-  setHoje(); setHistoricoDefault(); setRelatorioDefault();
+  setHoje(); setHistoricoDefault(); setRelatorioDefault(); setPagamentosDefault();
   if(url&&key) conectar(url,key);
 };
 
@@ -511,6 +598,7 @@ function showPage(p,btn){
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active'); btn.classList.add('active');
   if(p==='historico') carregarHistorico();
+  if(p==='pagamentos') carregarPagamentos();
 }
 function badgeSetor(s){return s==='Banho'?'banho':s==='Recepção'?'recepcao':s==='Mesa'?'mesa':'geral';}
 function fmt(v){return Number(v).toFixed(2).replace('.',',');}
@@ -831,60 +919,7 @@ async function carregarHistorico(){
   }).join('');
 }
 
-// ── RELATÓRIO ──
-async function gerarRelatorio(){
-  const mes=parseInt(document.getElementById('relMes').value),
-        ano=parseInt(document.getElementById('relAno').value),
-        qz=parseInt(document.getElementById('relQuinzena').value);
-  const dI=qz===1?1:16, dF=qz===1?15:31;
-  const dataIni=`${ano}-${String(mes).padStart(2,'0')}-${String(dI).padStart(2,'0')}`;
-  const dataFim=`${ano}-${String(mes).padStart(2,'0')}-${String(dF).padStart(2,'0')}`;
-  let rows=[];
-  if(modoDemo){rows=demoPedidos.filter(p=>p.data>=dataIni&&p.data<=dataFim);}
-  else if(sb){
-    const{data,error}=await sb.from('marmitas_pedidos').select('*')
-      .gte('data',dataIni).lte('data',dataFim)
-      .order('data').order('funcionario_nome');
-    if(error){toast('Erro: '+error.message);return;}
-    rows=data||[];
-  }
-  if(!rows.length){toast('Sem dados neste período');return;}
-  const meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  document.getElementById('relPeriodoLabel').textContent=`${qz}ª quinzena ${meses[mes-1]}/${ano} (dias ${dI}–${dF})`;
-  document.getElementById('relTotalPedidos').textContent=rows.length+' pedidos';
-  const tG=rows.reduce((s,p)=>s+Number(p.total),0);
-  document.getElementById('relTotalGeral').textContent='R$ '+fmt(tG);
-  const pF={};
-  rows.forEach(p=>{
-    if(!pF[p.funcionario_id])pF[p.funcionario_id]={nome:p.funcionario_nome,setor:p.funcionario_setor,total:0,count:0};
-    pF[p.funcionario_id].total+=Number(p.total);pF[p.funcionario_id].count+=p.quantidade;
-  });
-  document.getElementById('relFuncList').innerHTML=Object.values(pF).sort((a,b)=>b.total-a.total).map(f=>
-    `<div class="rel-func-card">
-      <div><div style="font-size:14px;font-weight:600;">${esc(f.nome)}</div>
-      <span class="badge badge-${badgeSetor(f.setor)}" style="margin-top:3px;">${f.setor}</span></div>
-      <div style="text-align:right;">
-        <div style="font-size:16px;font-weight:600;color:var(--accent);font-family:'DM Mono',monospace;">R$ ${fmt(f.total)}</div>
-        <div style="font-size:11px;color:var(--text3);">${f.count} itens</div>
-      </div>
-    </div>`
-  ).join('');
-  document.getElementById('relDiaList').innerHTML=rows.map(p=>{
-    const[y,m2,d]=p.data.split('-');
-    return `<div class="rel-dia-item">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-weight:500;font-size:13px;">${esc(p.funcionario_nome)}</span>
-        <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--accent);">R$ ${fmt(p.total)}</span>
-      </div>
-      <div style="font-size:12px;color:var(--text2);">${d}/${m2} · ${p.item_nome}${p.quantidade>1?' ×'+p.quantidade:''}</div>
-      ${p.observacao?`<div style="font-size:11px;color:var(--text3);">${esc(p.observacao)}</div>`:''}
-    </div>`;
-  }).join('');
-  document.getElementById('relResultado').style.display='block';
-  document.getElementById('relResultado').scrollIntoView({behavior:'smooth',block:'start'});
-}
-
-// ── CONFIG CARDÁPIO ──
+// ── RELATÓRIO MENSAL ──
 async function adicionarItem(){
   const nome=document.getElementById('novoItemNome').value.trim();
   const preco=parseFloat(document.getElementById('novoItemPreco').value)||0;
@@ -1121,6 +1156,318 @@ function copiarFuncionarios(){
   navigator.clipboard.writeText(txt).then(()=>toast('Copiado!')).catch(()=>{
     const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('Copiado!');
   });
+}
+
+// ── RELATÓRIO QUINZENAL: DETALHE POR FUNCIONÁRIO ──
+let _relRows=[];
+async function gerarRelatorio(){
+  const mes=parseInt(document.getElementById('relMes').value),
+        ano=parseInt(document.getElementById('relAno').value),
+        qz=parseInt(document.getElementById('relQuinzena').value);
+  const dI=qz===1?1:16, dF=qz===1?15:31;
+  const dataIni=`${ano}-${String(mes).padStart(2,'0')}-${String(dI).padStart(2,'0')}`;
+  const dataFim=`${ano}-${String(mes).padStart(2,'0')}-${String(dF).padStart(2,'0')}`;
+  let rows=[];
+  if(modoDemo){rows=demoPedidos.filter(p=>p.data>=dataIni&&p.data<=dataFim);}
+  else if(sb){
+    const{data,error}=await sb.from('marmitas_pedidos').select('*')
+      .gte('data',dataIni).lte('data',dataFim)
+      .order('data').order('funcionario_nome');
+    if(error){toast('Erro: '+error.message);return;}
+    rows=data||[];
+  }
+  if(!rows.length){toast('Sem dados neste período');return;}
+  _relRows=rows;
+  const meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  document.getElementById('relPeriodoLabel').textContent=`${qz}ª quinzena ${meses[mes-1]}/${ano} (dias ${dI}–${dF})`;
+  document.getElementById('relTotalPedidos').textContent=rows.length+' pedidos';
+  const tG=rows.reduce((s,p)=>s+Number(p.total),0);
+  document.getElementById('relTotalGeral').textContent='R$ '+fmt(tG);
+  const pF={};
+  rows.forEach(p=>{
+    if(!pF[p.funcionario_id])pF[p.funcionario_id]={nome:p.funcionario_nome,setor:p.funcionario_setor,total:0,count:0};
+    pF[p.funcionario_id].total+=Number(p.total);pF[p.funcionario_id].count+=p.quantidade;
+  });
+  document.getElementById('relFuncList').innerHTML=Object.values(pF).sort((a,b)=>b.total-a.total).map(f=>
+    `<div class="rel-func-card">
+      <div><div style="font-size:14px;font-weight:600;">${esc(f.nome)}</div>
+      <span class="badge badge-${badgeSetor(f.setor)}" style="margin-top:3px;">${f.setor}</span></div>
+      <div style="text-align:right;">
+        <div style="font-size:16px;font-weight:600;color:var(--accent);font-family:'DM Mono',monospace;">R$ ${fmt(f.total)}</div>
+        <div style="font-size:11px;color:var(--text3);">${f.count} itens</div>
+      </div>
+    </div>`
+  ).join('');
+  document.getElementById('relDiaList').innerHTML=rows.map(p=>{
+    const[y,m2,d]=p.data.split('-');
+    return `<div class="rel-dia-item">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-weight:500;font-size:13px;">${esc(p.funcionario_nome)}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--accent);">R$ ${fmt(p.total)}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text2);">${d}/${m2} · ${esc(p.item_nome)}${p.quantidade>1?' ×'+p.quantidade:''}</div>
+      ${p.observacao?`<div style="font-size:11px;color:var(--text3);">${esc(p.observacao)}</div>`:''}
+    </div>`;
+  }).join('');
+
+  // Detalhe dia a dia por funcionário
+  const porFunc={};
+  rows.forEach(p=>{
+    if(!porFunc[p.funcionario_id])porFunc[p.funcionario_id]={nome:p.funcionario_nome,setor:p.funcionario_setor,total:0,dias:{}};
+    porFunc[p.funcionario_id].total+=Number(p.total);
+    if(!porFunc[p.funcionario_id].dias[p.data])porFunc[p.funcionario_id].dias[p.data]=[];
+    porFunc[p.funcionario_id].dias[p.data].push(p);
+  });
+  document.getElementById('relFuncDetalheList').innerHTML=Object.values(porFunc)
+    .sort((a,b)=>a.nome.localeCompare(b.nome))
+    .map(f=>{
+      const diasHtml=Object.entries(f.dias).sort((a,b)=>a[0].localeCompare(b[0])).map(([data,pedidos])=>{
+        const[y,m2,d]=data.split('-');
+        const totalDia=pedidos.reduce((s,p)=>s+Number(p.total),0);
+        return `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:5px 0;border-bottom:1px solid var(--border);">
+          <div>
+            <span style="font-size:12px;font-weight:600;color:var(--text2);">${d}/${m2}</span>
+            <span style="font-size:12px;color:var(--text3);margin-left:8px;">${pedidos.map(p=>esc(p.item_nome)+(p.quantidade>1?' ×'+p.quantidade:'')).join(', ')}</span>
+          </div>
+          <span style="font-size:12px;font-family:'DM Mono',monospace;color:var(--accent);white-space:nowrap;margin-left:8px;">R$ ${fmt(totalDia)}</span>
+        </div>`;
+      }).join('');
+      return `<div style="margin-bottom:14px;border:1px solid var(--border);border-radius:var(--rsm);overflow:hidden;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surface2);">
+          <div>
+            <span style="font-size:13px;font-weight:700;">${esc(f.nome)}</span>
+            <span class="badge badge-${badgeSetor(f.setor)}" style="margin-left:6px;">${f.setor}</span>
+          </div>
+          <span style="font-size:15px;font-weight:700;color:var(--accent);font-family:'DM Mono',monospace;">R$ ${fmt(f.total)}</span>
+        </div>
+        <div style="padding:0 12px 4px;">${diasHtml}</div>
+      </div>`;
+    }).join('');
+
+  document.getElementById('relResultado').style.display='block';
+  document.getElementById('relResultado').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function imprimirRelatorio(){
+  const titulo=document.getElementById('relPeriodoLabel').textContent;
+  const total=document.getElementById('relTotalGeral').textContent;
+  const conteudo=document.getElementById('relResultado').innerHTML;
+  const win=window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head>
+    <meta charset="UTF-8"><title>Marmitas – ${esc(titulo)}</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+      :root{--accent:#c9622f;--border:#e0dbd3;--surface:#fff;--surface2:#f0ede8;--accent-bg:#fdf0ea;--accent-border:#f2c4a8;--text:#1a1917;--text2:#6b6760;--text3:#9e9a94;--r:10px;--rsm:6px;--green:#2d7d4f;}
+      *{box-sizing:border-box;margin:0;padding:0;}
+      body{font-family:'DM Sans',sans-serif;color:var(--text);font-size:12px;padding:16px;}
+      .print-header{text-align:center;border-bottom:2px solid var(--accent);padding-bottom:10px;margin-bottom:16px;}
+      .print-header h1{font-size:18px;color:var(--accent);}
+      .print-header p{font-size:12px;color:var(--text2);margin-top:4px;}
+      .card{border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;break-inside:avoid;}
+      .card-title{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;}
+      .total-card{background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:8px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;break-inside:avoid;}
+      .total-label{font-size:11px;color:var(--text2);}
+      .total-value{font-size:20px;font-weight:600;color:var(--accent);font-family:'DM Mono',monospace;}
+      .rel-func-card{border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;break-inside:avoid;}
+      .rel-dia-item{padding:7px 0;border-bottom:1px solid var(--border);}
+      .badge{display:inline-block;font-size:10px;font-weight:500;padding:2px 7px;border-radius:20px;}
+      .badge-banho{background:#e8f0fe;color:#1a56a0;}
+      .badge-recepcao{background:#f3e8fe;color:#6b21a8;}
+      .badge-mesa{background:#e8fef0;color:#166534;}
+      .badge-geral{background:#fef9e8;color:#854d0e;}
+      #relBtnImprimir{display:none!important;}
+      @page{margin:12mm 10mm;}
+      @media print{#relBtnImprimir{display:none!important;}}
+    </style>
+  </head><body>
+    <div class="print-header">
+      <h1>🍱 Marmitas · Scarlat Galvânica</h1>
+      <p>Relatório da quinzena — ${esc(titulo)} — Total: ${esc(total)}</p>
+      <p style="font-size:10px;color:#999;margin-top:4px;">Gerado em ${new Date().toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})}</p>
+    </div>
+    ${conteudo}
+    <script>window.onload=function(){window.print();}<\/script>
+  </body></html>`);
+  win.document.close();
+}
+
+function copiarRelatorioTexto(){
+  const periodo=document.getElementById('relPeriodoLabel').textContent;
+  const total=document.getElementById('relTotalGeral').textContent;
+  const porFunc={};
+  _relRows.forEach(p=>{
+    if(!porFunc[p.funcionario_id])porFunc[p.funcionario_id]={nome:p.funcionario_nome,total:0,dias:{}};
+    porFunc[p.funcionario_id].total+=Number(p.total);
+    if(!porFunc[p.funcionario_id].dias[p.data])porFunc[p.funcionario_id].dias[p.data]=[];
+    porFunc[p.funcionario_id].dias[p.data].push(p);
+  });
+  let txt=`🍱 MARMITAS · SCARLAT GALVÂNICA\n${periodo}\n${'━'.repeat(30)}\n\n`;
+  Object.values(porFunc).sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(f=>{
+    txt+=`*${f.nome}* — R$ ${fmt(f.total)}\n`;
+    Object.entries(f.dias).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([data,pedidos])=>{
+      const[,m2,d]=data.split('-');
+      pedidos.forEach(p=>{txt+=`  ${d}/${m2}: ${p.item_nome}${p.quantidade>1?' ×'+p.quantidade:''} — R$ ${fmt(p.total)}\n`;});
+    });
+    txt+=`\n`;
+  });
+  txt+=`${'━'.repeat(30)}\n*Total: ${total}*`;
+  navigator.clipboard.writeText(txt).then(()=>toast('Copiado!')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('Copiado!');
+  });
+}
+
+// ── PAGAMENTOS ──
+let _pagamentos=[];
+
+function setPagamentosDefault(){
+  const hoje=new Date();
+  const sp=new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',year:'numeric',month:'numeric',day:'numeric'}).formatToParts(hoje);
+  const d=Object.fromEntries(sp.map(p=>[p.type,p.value]));
+  document.getElementById('pagMes').value=parseInt(d.month);
+  document.getElementById('pagAno').value=parseInt(d.year);
+  document.getElementById('pagQuinzena').value=parseInt(d.day)<=15?'1':'2';
+  document.getElementById('pagData').value=new Intl.DateTimeFormat('fr-CA',{timeZone:'America/Sao_Paulo'}).format(new Date());
+}
+
+async function salvarPagamento(){
+  const mes=parseInt(document.getElementById('pagMes').value);
+  const ano=parseInt(document.getElementById('pagAno').value);
+  const qz=parseInt(document.getElementById('pagQuinzena').value);
+  const cobrado=parseFloat(document.getElementById('pagCobrado').value)||0;
+  const pagoRaw=document.getElementById('pagPago').value.trim();
+  const pago=pagoRaw?parseFloat(pagoRaw):cobrado;
+  const dataPag=document.getElementById('pagData').value||null;
+  const obs=document.getElementById('pagObs').value.trim()||null;
+
+  if(!cobrado){toast('Informe o valor cobrado');return;}
+
+  // Busca valor do sistema para esta quinzena
+  const dI=qz===1?1:16, dF=qz===1?15:31;
+  const dataIni=`${ano}-${String(mes).padStart(2,'0')}-${String(dI).padStart(2,'0')}`;
+  const dataFim=`${ano}-${String(mes).padStart(2,'0')}-${String(dF).padStart(2,'0')}`;
+  let valorSistema=0;
+  if(sb){
+    const{data,error}=await sb.from('marmitas_pedidos').select('total').gte('data',dataIni).lte('data',dataFim);
+    if(!error&&data) valorSistema=data.reduce((s,p)=>s+Number(p.total),0);
+  }
+
+  const payload={ano,mes,quinzena:qz,valor_sistema:valorSistema,valor_cobrado:cobrado,valor_pago:pago,data_pagamento:dataPag,observacao:obs};
+
+  if(!sb){toast('Modo demo: pagamento não salvo');return;}
+  // upsert pela chave única (ano, mes, quinzena)
+  const{error}=await sb.from('marmitas_pagamentos').upsert(payload,{onConflict:'ano,mes,quinzena'});
+  if(error){toast('Erro: '+error.message);return;}
+  toast('✅ Pagamento salvo!');
+  document.getElementById('pagCobrado').value='';
+  document.getElementById('pagPago').value='';
+  document.getElementById('pagObs').value='';
+  await carregarPagamentos();
+}
+
+async function carregarPagamentos(){
+  if(!sb){document.getElementById('pagEmpty').style.display='block';return;}
+  const ano=parseInt(document.getElementById('pagFiltroAno').value)||new Date().getFullYear();
+  const{data,error}=await sb.from('marmitas_pagamentos').select('*').eq('ano',ano).order('mes',{ascending:false}).order('quinzena',{ascending:false});
+  if(error){toast('Erro: '+error.message);return;}
+  _pagamentos=data||[];
+  renderPagamentos(ano);
+}
+
+function renderPagamentos(ano){
+  const meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const lista=document.getElementById('pagLista');
+  const empty=document.getElementById('pagEmpty');
+  const totaisEl=document.getElementById('pagTotaisAno');
+
+  if(!_pagamentos.length){lista.innerHTML='';empty.style.display='block';totaisEl.style.display='none';return;}
+  empty.style.display='none';
+
+  // Totais do ano
+  const totalSistema=_pagamentos.reduce((s,p)=>s+Number(p.valor_sistema),0);
+  const totalCobrado=_pagamentos.reduce((s,p)=>s+Number(p.valor_cobrado),0);
+  const totalPago=_pagamentos.reduce((s,p)=>s+Number(p.valor_pago||p.valor_cobrado),0);
+  const diffAno=totalPago-totalSistema;
+  const diffClass=Math.abs(diffAno)<0.01?'pag-diff-ok':diffAno>0?'pag-diff-neg':'pag-diff-warn';
+  totaisEl.style.display='block';
+  totaisEl.innerHTML=`
+    <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;margin-bottom:8px;">Resumo ${ano}</div>
+    <div class="pag-resumo-row"><span>Total sistema</span><span style="font-family:'DM Mono',monospace;">R$ ${fmt(totalSistema)}</span></div>
+    <div class="pag-resumo-row"><span>Total cobrado</span><span style="font-family:'DM Mono',monospace;">R$ ${fmt(totalCobrado)}</span></div>
+    <div class="pag-resumo-row"><span>Total pago</span><span style="font-family:'DM Mono',monospace;">R$ ${fmt(totalPago)}</span></div>
+    <div class="pag-resumo-row" style="margin-top:4px;padding-top:8px;border-top:2px solid var(--border);">
+      <span>Diferença acumulada</span>
+      <span style="font-family:'DM Mono',monospace;color:${Math.abs(diffAno)<0.01?'var(--green)':diffAno>0?'#c0392b':'#854d0e'};">
+        ${diffAno>0?'+':''}R$ ${fmt(Math.abs(diffAno))} ${diffAno>0?'(pagou a mais)':diffAno<0?'(pagou a menos)':'(zerado ✓)'}
+      </span>
+    </div>`;
+
+  lista.innerHTML=_pagamentos.map(p=>{
+    const diff=Number(p.valor_pago||p.valor_cobrado)-Number(p.valor_sistema);
+    const absDiff=Math.abs(diff);
+    const isOk=absDiff<0.01;
+    const badgeClass=isOk?'pag-badge-ok':diff>0?'pag-badge-divergencia':'pag-badge-warn';
+    const badgeLabel=isOk?'✓ OK':diff>0?`+R$ ${fmt(absDiff)} cobrou a mais`:`-R$ ${fmt(absDiff)} cobrou a menos`;
+    const dataPag=p.data_pagamento?p.data_pagamento.split('-').reverse().join('/'):'—';
+    return `<div class="pag-quinzena-card">
+      <div class="pag-quinzena-header" onclick="togglePagCard(this)">
+        <div>
+          <h4>${p.quinzena}ª quinzena – ${meses[p.mes-1]}/${p.ano}</h4>
+          <div class="pag-sub">${dataPag==='—'?'sem data de pagamento':'Pago em '+dataPag}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+          <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--accent);">R$ ${fmt(p.valor_pago||p.valor_cobrado)}</span>
+          <span class="pag-badge ${badgeClass}">${esc(badgeLabel)}</span>
+        </div>
+      </div>
+      <div class="pag-body">
+        <div class="pag-resumo-row"><span>Sistema calculou</span><span style="font-family:'DM Mono',monospace;">R$ ${fmt(p.valor_sistema)}</span></div>
+        <div class="pag-resumo-row"><span>Restaurante cobrou</span><span style="font-family:'DM Mono',monospace;">R$ ${fmt(p.valor_cobrado)}</span></div>
+        ${Number(p.valor_pago)!==Number(p.valor_cobrado)?`<div class="pag-resumo-row"><span>Valor pago efetivo</span><span style="font-family:'DM Mono',monospace;">R$ ${fmt(p.valor_pago)}</span></div>`:''}
+        <div class="pag-resumo-row" style="margin-top:4px;padding-top:8px;border-top:2px solid var(--border);">
+          <span>Diferença (pago – sistema)</span>
+          <span style="font-family:'DM Mono',monospace;font-weight:700;color:${isOk?'var(--green)':diff>0?'#c0392b':'#854d0e'};">
+            ${diff>=0?'+':''}R$ ${fmt(diff)}
+          </span>
+        </div>
+        ${!isOk?`<div class="pag-diff ${diff>0?'pag-diff-neg':'pag-diff-warn'}" style="margin-top:8px;">
+          ${diff>0
+            ?`⚠️ O restaurante cobrou R$ ${fmt(absDiff)} a mais do que o sistema calculou. Confira o relatório da quinzena item a item.`
+            :`ℹ️ O restaurante cobrou R$ ${fmt(absDiff)} a menos. Pode ser desconto ou item não lançado no sistema.`
+          }
+        </div>`:'<div class="pag-diff pag-diff-ok" style="margin-top:8px;">✅ Sem divergência nesta quinzena.</div>'}
+        ${p.observacao?`<div style="font-size:12px;color:var(--text2);margin-top:6px;">📝 ${esc(p.observacao)}</div>`:''}
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="editarPagamento(${JSON.stringify(p).replace(/"/g,'&quot;')})">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="excluirPagamento('${p.id}')">Excluir</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function togglePagCard(header){
+  const body=header.nextElementSibling;
+  body.classList.toggle('open');
+}
+
+function editarPagamento(p){
+  document.getElementById('pagMes').value=p.mes;
+  document.getElementById('pagAno').value=p.ano;
+  document.getElementById('pagQuinzena').value=p.quinzena;
+  document.getElementById('pagCobrado').value=p.valor_cobrado;
+  document.getElementById('pagPago').value=p.valor_pago||'';
+  document.getElementById('pagData').value=p.data_pagamento||'';
+  document.getElementById('pagObs').value=p.observacao||'';
+  window.scrollTo({top:0,behavior:'smooth'});
+  toast('Dados carregados. Altere e salve novamente.');
+}
+
+async function excluirPagamento(id){
+  if(!confirm('Excluir este pagamento?'))return;
+  const{error}=await sb.from('marmitas_pagamentos').delete().eq('id',id);
+  if(error){toast('Erro: '+error.message);return;}
+  toast('Excluído');
+  await carregarPagamentos();
 }
 
 function toast(msg){
